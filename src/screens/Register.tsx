@@ -5,6 +5,7 @@ import { styles } from '../theme/styles'
 import handlerSetValues from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../configs/firebaseConfig';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 //Interface - formulario registro
 interface FormRegister{
     email: string;
@@ -21,7 +22,9 @@ export const RegisterScreen = () => {
     const [formRegister, setRegister] = useState<FormRegister>({
         email:'',
         password:''
-    })
+    });
+     //hook visualizar contraseña
+     const [hiddenPassword, setHiddenPassword] = useState<boolean>(true)
     //Visualizart u ocultar el mensaje
     const [showMessage, setShowMessage] = useState<MessageSnackBar>({
         visible: false,
@@ -32,6 +35,8 @@ export const RegisterScreen = () => {
     const handlerSetValues = (key: string, value: string) =>{
         setRegister({...formRegister, [key]:value })
     }
+    //hook navigation
+    const navigation = useNavigation()
     //funcion para enviar y crear al usuario
     const handlerFormRegister = async() =>{
         //validar que existe datos en el formulario
@@ -80,19 +85,24 @@ export const RegisterScreen = () => {
         <TextInput 
         mode="outlined"
         label="contraseña"
-        placeholder="Escribe tu contraseña" secureTextEntry
+        placeholder="Escribe tu contraseña" 
+        secureTextEntry={hiddenPassword}
         style={styles.inputs}
-        onChangeText={(value)=>handlerSetValues('password', value)}>
+        right={<TextInput.Icon icon="eye" onPress={()=>setHiddenPassword(!hiddenPassword)}/>}>
         </TextInput>
         <Button style={styles.button}mode="contained" onPress={handlerFormRegister}>
             Register
         </Button>
+        <Text style={styles.textRedirect}
+            onPress={()=>navigation.dispatch(CommonActions.navigate({name: 'Login'}))}>
+                Ya tienes una cuenta? Inicia Sesión Ahora
+            </Text>
         <Snackbar
-        visible={showMessage}
-        onDismiss={()=>setShowMessage(false)}
-        style={{backgroundColor:'#8f0e2a'}}
+        visible={showMessage.visible}
+        onDismiss={()=>setShowMessage({...showMessage, visible: false})}
+        style={{backgroundColor: showMessage.color}}
         >
-        Completa todos los campos
+        {showMessage.message}
       </Snackbar>
     </View>
   )

@@ -15,5 +15,11 @@ export const styles=StyleSheet.create({
     },
     button:{
         width:"90%"
+    },
+    textRedirect:{
+        marginTop:20,
+        fontSize:17,
+        fontWeight:'bold',
+        color:'#705aaa'
     }
 })
