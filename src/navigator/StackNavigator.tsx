@@ -5,6 +5,9 @@ import { HomeScreen } from '../screens/HomeScreen/HomeScreen';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../configs/firebaseConfig';
+import { ActivityIndicator, MD2Colors } from 'react-native-paper';
+import { View } from 'react-native';
+import { styles } from '../theme/styles';
 
 
 const Stack = createStackNavigator();
@@ -40,6 +43,8 @@ export const StackNavigator =() => {
     })
   })
   return (
+
+    
     <Stack.Navigator>
       {
         !isAuth ?
@@ -52,5 +57,4 @@ export const StackNavigator =() => {
         ))
       }
     </Stack.Navigator>
-  );
-}
+  )};

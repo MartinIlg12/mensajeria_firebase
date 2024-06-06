@@ -21,5 +21,39 @@ export const styles=StyleSheet.create({
         fontSize:17,
         fontWeight:'bold',
         color:'#705aaa'
+    },
+    routeHome:{
+        flex:1,
+        marginVertical:55,
+        marginHorizontal:25,
+    },
+    header:{
+        flexDirection:'row',
+        alignItems:'center',
+        gap:15
+    },
+    iconEnd:{
+        flex:1,
+        alignItems:'flex-end'
+    },
+    modalProfile:{
+        paddingHorizontal:20,
+        paddingVertical:20,
+        marginHorizontal:20,
+        borderRadius:10,
+        backgroundColor:'white',
+        gap:10
+    },
+    routeMessage:{
+        borderRadius:20,
+        flexDirection:'row',
+        paddingHorizontal:15,
+        paddingVertical:20,
+        alignItems:'center'
+    },
+    fabMessage:{
+        position:'absolute',
+        bottom:20,
+        right:15,
     }
 })
