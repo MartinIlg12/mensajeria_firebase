@@ -5,56 +5,70 @@ import { HomeScreen } from '../screens/HomeScreen/HomeScreen';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../configs/firebaseConfig';
-import { ActivityIndicator, MD2Colors } from 'react-native-paper';
 import { View } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
 import { styles } from '../theme/styles';
 
-
 const Stack = createStackNavigator();
-//Interface - rutas
-interface Routes{
-  name: string,
-  screen:()=> JSX.Element;
-}
-//Arreglo que contiene las rutas cuando el usuario no esta autenticado
-const routesNoAuth: Routes[]=[
-  {name: "Login", screen: LoginScreen},
-  {name: "Register", screen: RegisterScreen}
-];
-//Arreglo que contiene las rutas cuando el usuario esta autenticado
-const routeAuth: Routes[]=[
-  {name: "Home", screen: HomeScreen}
-];
-export const StackNavigator =() => {
-  //hook useState: verifica si esta autenticado o no
-  const [isAuth, setIsAuth] = useState<boolean>(false)
-  //useState Carga Inicial
-  const [isLoading, setisLoading] = useState<Boolean>(false)
-  //use Effect verificar si esta auth
-  useEffect(()=>{
-    setisLoading(true);
-    onAuthStateChanged(auth, (user)=>{
-      //validar si está autenticado
-      if(user){
-        //console.log(user)
-        setIsAuth(true);
-      }
-      setisLoading(true);;
-    })
-  })
-  return (
 
-    
-    <Stack.Navigator>
-      {
-        !isAuth ?
-        routesNoAuth.map((item, index)=>(
-          <Stack.Screen key={index} name={item.name} options={{headerShown: false}} component={item.screen} />
-        ))
-        :
-        routeAuth.map((item, index)=>(
-          <Stack.Screen key={index} name={item.name} options={{headerShown: false}} component={item.screen} />
-        ))
-      }
-    </Stack.Navigator>
-  )};
+//Interface - Rutas
+interface Routes {
+    name: string;
+    screen: () => JSX.Element;
+}
+
+//Arreglo que contiene las rutas cuando el usuario no está autenticado
+const routesNoAuth: Routes[] = [
+    { name: "Login", screen: LoginScreen },
+    { name: "Register", screen: RegisterScreen }
+];
+
+//Arreglo que contiene las rutas cuando el usuario está autenticado
+const routesAuth: Routes[] = [
+    { name: "Home", screen: HomeScreen }
+];
+
+export const StackNavigator = () => {
+    //hook useState: verifica si está autenticado o no
+    const [isAuth, setIsAuth] = useState<boolean>(false);
+
+    //hook useState: controlar la carga inicial
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    //hook useEffect: verificar si el usuario está autenticado
+    useEffect(() => {
+        setIsLoading(true);
+        onAuthStateChanged(auth, (user) => {
+            //Validar si está autenticado
+            if (user) {
+                //console.log(user);
+                setIsAuth(true);
+            }
+            setIsLoading(false);
+        });
+
+    }, []);
+
+    return (
+        <>
+            {isLoading ? (
+                <View style={styles.root}>
+                    <ActivityIndicator size={40} />
+                </View>
+            ) : (
+                <Stack.Navigator>
+                    {
+                        !isAuth ?
+                            routesNoAuth.map((item, index) => (
+                                <Stack.Screen key={index} name={item.name} options={{ headerShown: false }} component={item.screen} />
+                            ))
+                            :
+                            routesAuth.map((item, index) => (
+                                <Stack.Screen key={index} name={item.name} options={{ headerShown: false }} component={item.screen} />
+                            ))
+                    }
+                </Stack.Navigator>
+            )}
+        </>
+    );
+}

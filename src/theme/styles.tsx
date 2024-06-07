@@ -36,7 +36,7 @@ export const styles=StyleSheet.create({
         flex:1,
         alignItems:'flex-end'
     },
-    modalProfile:{
+    modal:{
         paddingHorizontal:20,
         paddingVertical:20,
         marginHorizontal:20,

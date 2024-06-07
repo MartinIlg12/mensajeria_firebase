@@ -8,6 +8,7 @@ import handlerSetValues from 'react';
 import { FlatList } from 'react-native-gesture-handler';
 import { Item } from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
 import { MessageCardComponent } from './components/MessageCardComponent';
+import { NewMessageComponent } from './components/NewMessageComponent';
 //interfaz - formulario del perfil
 interface FormUser{
   name: string;
@@ -38,7 +39,9 @@ export const HomeScreen = () => {
       },
       [])
   //Hook useState_: Mostrar u ocultar el modal
-  const [showModalProfile, setShowModalProfile] = useState<boolean>(false)
+  const [showModalProfile, setShowModalProfile] = useState<boolean>(false);
+  //Hook useState mostrar el modelo del perfik
+  const [showModalMessage, setShowModalMessage] = useState<boolean>(false);
   //funcion cambiar valores
   const handlerSetValues=(key: string, value: string)=>{
     setFormUser({...formUser,[key]:value})
@@ -78,7 +81,7 @@ export const HomeScreen = () => {
         </View>
     </View>
     <Portal>
-        <Modal visible={showModalProfile}  contentContainerStyle={styles.modalProfile}>
+        <Modal visible={showModalProfile}  contentContainerStyle={styles.modal}>
           <View style={styles.header}>
             <Text variant='headlineMedium'>Mi perfil</Text>
             <View style={styles.iconEnd}>
@@ -106,8 +109,9 @@ export const HomeScreen = () => {
       <FAB 
         style={styles.fabMessage}
         icon="plus"
-        onPress={() => console.log('Pressed')}
+        onPress={() => setShowModalMessage(true)}
         />
+        <NewMessageComponent showModalMessage={showModalMessage} setShowModalMessage={setShowModalMessage}/>
     </>
   )
 }
