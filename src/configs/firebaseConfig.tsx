@@ -24,4 +24,4 @@ export const auth = initializeAuth(firebase, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
 //referencia al servicio de data base
-export const database = getDatabase(firebase);
+export const dbRealTime = getDatabase(firebase);

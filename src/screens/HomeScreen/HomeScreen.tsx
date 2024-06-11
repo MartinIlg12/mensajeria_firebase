@@ -3,18 +3,19 @@ import { View } from 'react-native'
 import { Avatar, Button, Divider, FAB, IconButton, Modal, Portal, Text, TextInput } from 'react-native-paper'
 import { styles } from '../../theme/styles'
 import  firebase, { updateProfile }  from 'firebase/auth';
-import { auth } from '../../configs/firebaseConfig';
+import { auth, dbRealTime } from '../../configs/firebaseConfig';
 import handlerSetValues from 'react';
 import { FlatList } from 'react-native-gesture-handler';
 import { Item } from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
 import { MessageCardComponent } from './components/MessageCardComponent';
 import { NewMessageComponent } from './components/NewMessageComponent';
+import { onValue, ref } from 'firebase/database';
 //interfaz - formulario del perfil
 interface FormUser{
   name: string;
 }
 //interfaz *- mensajes
-interface Message{
+ export interface Message{
   id: string;
   to: string;
   subject: string;
@@ -26,15 +27,15 @@ export const HomeScreen = () => {
     name:'',
   });
   //hook useState: 
-  const [message, setMessage] = useState<Message[]>([
-    {id:'1', to: 'Martin Ilguan', subject:'Estudiar', message:'Estudiar para el Jueves!'}
-  ])
+  const [message, setMessage] = useState<Message[]>([])
   //hook UseState: capturar la data del usuario logeado
   const [userUth, setUserAuth]=useState<firebase.User | null>(null);
   //useEffect: capturas la datta e¿del usuario
   useEffect(() => {
     setUserAuth(auth.currentUser)
     setFormUser({name: auth.currentUser?.displayName ?? ""})
+    //funcion para listar mensajes
+    getAllMessages();
     //console.log(auth.currentUser)
       },
       [])
@@ -52,6 +53,26 @@ export const HomeScreen = () => {
       displayName:formUser.name
     })
     setShowModalProfile(false);
+  }
+  //funcion para acceder a la data
+  const getAllMessages = () =>{
+      //referencia a la db tables
+    const dbRef=ref(dbRealTime, 'messages')
+    //2. Consultar a la db
+    onValue(dbRef,(snapshot)=>{
+      //3. Capturaar la dta
+      const data = snapshot.val();//formato esperado
+      //4 obtener keys de los mensajes
+      const getKeys = Object.keys(data);
+      //5. crear un arreglo para almacenar los datos
+      const listMessages : Message[]=[];
+      getKeys.forEach((key)=>{
+        const value = {...data[key], id: key}
+        listMessages.push(value);
+      })
+      //Almacenar el arreglo del hook
+      setMessage(listMessages);
+    })
   }
   return (
     <>
@@ -75,7 +96,7 @@ export const HomeScreen = () => {
         <View>
               <FlatList
                 data={message}
-                renderItem={({item}) =><MessageCardComponent/>}
+                renderItem={({item}) =><MessageCardComponent message={item}/>}
                 keyExtractor={item => item.id}
             />
         </View>

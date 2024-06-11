@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 import { Button, Divider, IconButton, Modal, Portal, Text,TextInput } from 'react-native-paper'
 import { styles } from '../../../theme/styles';
 import { View } from 'react-native';
+import {dbRealTime} from '../../../configs/firebaseConfig'
 import handlerSetValues from 'react';
+import { push, ref, set } from 'firebase/database';
 //crear interfaz de props
 interface Props{
   showModalMessage:boolean;
@@ -25,12 +27,29 @@ export const NewMessageComponent = ({showModalMessage, setShowModalMessage}: Pro
       setFormMessage({...forMessage, [key]:value })
   }
   //guardar los mensajes
-  const handlerSaveMessage=()=>{
+  const handlerSaveMessage = async()=>{
     if(!forMessage.to || !forMessage.subject || !forMessage.message){
       return;
     }
     //console.log(forMessage);
     //Almacenar los datos en db
+    //1.Crear la referencia a la base de datos-nombre Tabla
+    const dbRef = ref(dbRealTime, 'messages');
+    //2. crear coleccion - mensajes
+    const saveMessage = push(dbRef);
+    //guardar mensajes
+    try{
+      await set(saveMessage, forMessage);
+      //limpiar el formulario
+      setFormMessage({
+        message:'',
+        subject:'',
+        to:''
+      })
+    }catch (ex){
+      console.log(ex)
+    }
+    setShowModalMessage(false);
   }
   return (
     <Portal>
