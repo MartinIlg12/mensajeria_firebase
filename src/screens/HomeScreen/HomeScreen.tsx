@@ -1,138 +1,168 @@
 import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { FlatList, View } from 'react-native'
 import { Avatar, Button, Divider, FAB, IconButton, Modal, Portal, Text, TextInput } from 'react-native-paper'
 import { styles } from '../../theme/styles'
-import  firebase, { updateProfile }  from 'firebase/auth';
+import firebase, { signOut, updateProfile } from 'firebase/auth';
 import { auth, dbRealTime } from '../../configs/firebaseConfig';
-import handlerSetValues from 'react';
-import { FlatList } from 'react-native-gesture-handler';
-import { Item } from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
 import { MessageCardComponent } from './components/MessageCardComponent';
 import { NewMessageComponent } from './components/NewMessageComponent';
 import { onValue, ref } from 'firebase/database';
-//interfaz - formulario del perfil
-interface FormUser{
-  name: string;
+import { CommonActions, useNavigation } from '@react-navigation/native';
+
+//Interface - formulario perfil
+interface FormUser {
+    name: string;
 }
-//interfaz *- mensajes
- export interface Message{
-  id: string;
-  to: string;
-  subject: string;
-  message: string;
+
+//Interface - Message
+export interface Message {
+    id: string;
+    to: string;
+    subject: string;
+    message: string;
 }
+
 export const HomeScreen = () => {
-  //hook use state : manipular el formulario del perfil de usuario
-  const [formUser, setFormUser] = useState<FormUser>({
-    name:'',
-  });
-  //hook useState: 
-  const [message, setMessage] = useState<Message[]>([])
-  //hook UseState: capturar la data del usuario logeado
-  const [userUth, setUserAuth]=useState<firebase.User | null>(null);
-  //useEffect: capturas la datta e¿del usuario
-  useEffect(() => {
-    setUserAuth(auth.currentUser)
-    setFormUser({name: auth.currentUser?.displayName ?? ""})
-    //funcion para listar mensajes
-    getAllMessages();
-    //console.log(auth.currentUser)
-      },
-      [])
-  //Hook useState_: Mostrar u ocultar el modal
-  const [showModalProfile, setShowModalProfile] = useState<boolean>(false);
-  //Hook useState mostrar el modelo del perfik
-  const [showModalMessage, setShowModalMessage] = useState<boolean>(false);
-  //funcion cambiar valores
-  const handlerSetValues=(key: string, value: string)=>{
-    setFormUser({...formUser,[key]:value})
-  }
-  //funcion actualizar la data
-  const handlerUpdateUser=async()=>{
-    await updateProfile(userUth!,{
-      displayName:formUser.name
-    })
-    setShowModalProfile(false);
-  }
-  //funcion para acceder a la data
-  const getAllMessages = () =>{
-      //referencia a la db tables
-    const dbRef=ref(dbRealTime, 'messages')
-    //2. Consultar a la db
-    onValue(dbRef,(snapshot)=>{
-      //3. Capturaar la dta
-      const data = snapshot.val();//formato esperado
-      //4 obtener keys de los mensajes
-      const getKeys = Object.keys(data);
-      //5. crear un arreglo para almacenar los datos
-      const listMessages : Message[]=[];
-      getKeys.forEach((key)=>{
-        const value = {...data[key], id: key}
-        listMessages.push(value);
-      })
-      //Almacenar el arreglo del hook
-      setMessage(listMessages);
-    })
-  }
-  return (
-    <>
-    <View style={styles.routeHome}>
-      <View style={styles.header}>
-        <Avatar.Text 
-        size={24} label="MI"/>
-        <View>
-          <Text variant='bodySmall'>Bienvenido</Text>
-          <Text variant='labelLarge'>{userUth?.displayName}</Text>
-          </View>
-          <View style={styles.iconEnd}>
-          <IconButton
-                icon="account-edit"
-                size={30}
-                mode='contained'
-                onPress={() => {setShowModalProfile(true)}}
-                />
-          </View>
-        </View>
-        <View>
-              <FlatList
-                data={message}
-                renderItem={({item}) =><MessageCardComponent message={item}/>}
-                keyExtractor={item => item.id}
-            />
-        </View>
-    </View>
-    <Portal>
-        <Modal visible={showModalProfile}  contentContainerStyle={styles.modal}>
-          <View style={styles.header}>
-            <Text variant='headlineMedium'>Mi perfil</Text>
-            <View style={styles.iconEnd}>
-              <IconButton icon='close-circle-outline' size={30} onPress={()=>setShowModalProfile(false)}/>
+
+    //hook useState: manipular el formulario del perfil de usuario
+    const [formUser, setFormUser] = useState<FormUser>({
+        name: ''
+    });
+
+    //hook useState: capturar la data del usuario logueado
+    const [userAuth, setUserAuth] = useState<firebase.User | null>(null);
+
+    //hook useState: lista de mensajes
+    const [messages, setMessages] = useState<Message[]>([]);
+
+    //useEffect: capturar la data del usuario autenticado
+    useEffect(() => {
+        //Obtener la data del usuario autenticado
+        setUserAuth(auth.currentUser);
+        //console.log(auth.currentUser);
+        setFormUser({ name: auth.currentUser?.displayName ?? "" })
+        //Función para listar mensajes
+        getAllMessages();
+    }, []);
+
+    //hook useState: mostrar u ocultar el modal del perfil
+    const [showModalProfile, setShowModalProfile] = useState<boolean>(false);
+
+    //hook useState: mostrar u ocultar el modal del message
+    const [showModalMessage, setShowModalMessage] = useState<boolean>(false);
+
+    //hook navegación
+    const navigation = useNavigation();
+
+    //Función para cambiar los datos del formulario
+    const handlerSetValues = (key: string, value: string) => {
+        setFormUser({ ...formUser, [key]: value })
+    }
+
+    //Función actualizar la data del usuario autenticado
+    const handlerUpdateUser = async () => {
+        await updateProfile(userAuth!, {
+            displayName: formUser.name
+        });
+        setShowModalProfile(false);
+    }
+
+    //Función para acceder a la data
+    const getAllMessages = () => {
+        //1. Refrencia a la BDD - tabla
+        const dbRef = ref(dbRealTime, 'messages/' + auth.currentUser?.uid);
+        //2. Consultamos a la BDD
+        onValue(dbRef, (snapshot) => {
+            //3. Capturar la data
+            const data = snapshot.val(); // formato esperado
+            //CONTROLAR QUE LA DATA TENGA INFORMACIÓN
+            if (!data) return;
+            //4. Obtener keys de los mensajes
+            const getKeys = Object.keys(data);
+            //5. Crear un arreglo para almacenar los mensajes de la BDD
+            const listMessages: Message[] = [];
+            getKeys.forEach((key) => {
+                const value = { ...data[key], id: key }
+                listMessages.push(value);
+            })
+            //6. Almacenar en el arreglo del hook
+            setMessages(listMessages);
+        })
+    }
+
+    //Función para cerrar sesión
+    const handlerSignOut = async () => {
+        await signOut(auth);
+        //resetear las rutas
+        //navigation.dispatch(CommonActions.navigate({ name: 'Login' }));
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] }))
+    }
+
+    return (
+        <>
+            <View style={styles.routeHome}>
+                <View style={styles.header}>
+                    <Avatar.Text size={55} label="MI" />
+                    <View>
+                        <Text variant='bodySmall'>Bienvenida</Text>
+                        <Text variant='labelLarge'>{userAuth?.displayName}</Text>
+                    </View>
+                    <View style={styles.iconEnd}>
+                        <IconButton
+                            icon="account-edit"
+                            size={30}
+                            mode='contained'
+                            onPress={() => setShowModalProfile(true)}
+                        />
+                    </View>
+                </View>
+                <View>
+                    <FlatList
+                        data={messages}
+                        renderItem={({ item }) => <MessageCardComponent message={item} />}
+                        keyExtractor={item => item.id}
+                    />
+                </View>
             </View>
-          </View>
-          <Divider/>
-          <TextInput 
-          mode='outlined'
-          label='Nombre'
-          value={formUser.name}
-          onChangeText={(value)=>handlerSetValues('name', value)}>
-          
-          </TextInput><TextInput 
-          mode='outlined'
-          label='Correo'
-          value={userUth?.email!}
-          disabled>
-          </TextInput>
-          <Button mode='contained' onPress={handlerUpdateUser}>
-            Actualizar
-          </Button>
-        </Modal>
-      </Portal>
-      <FAB 
-        style={styles.fabMessage}
-        icon="plus"
-        onPress={() => setShowModalMessage(true)}
-        />
-        <NewMessageComponent showModalMessage={showModalMessage} setShowModalMessage={setShowModalMessage}/>
-    </>
-  )
+            <Portal>
+                <Modal visible={showModalProfile} contentContainerStyle={styles.modal}>
+                    <View style={styles.header}>
+                        <Text variant='headlineMedium'>Mi Perfil</Text>
+                        <View style={styles.iconEnd}>
+                            <IconButton
+                                icon='close-circle-outline'
+                                size={30}
+                                onPress={() => setShowModalProfile(false)} />
+                        </View>
+                    </View>
+                    <Divider />
+                    <TextInput
+                        mode='outlined'
+                        label='Nombre'
+                        value={formUser.name}
+                        onChangeText={(value) => handlerSetValues('name', value)} />
+                    <TextInput
+                        mode='outlined'
+                        label='Correo'
+                        value={userAuth?.email!}
+                        disabled />
+                    <Button mode='contained' onPress={handlerUpdateUser}>Actualizar</Button>
+                    <View style={styles.inconSingOut}>
+                        <IconButton
+                            icon="logout"
+                            size={35}
+                            mode='contained'
+                            onPress={handlerSignOut}
+                        />
+                    </View>
+                </Modal>
+            </Portal>
+            <FAB
+                icon="plus"
+                style={styles.fabMessage}
+                onPress={() => setShowModalMessage(true)}
+            />
+            <NewMessageComponent showModalMessage={showModalMessage} setShowModalMessage={setShowModalMessage} />
+        </>
+    )
 }

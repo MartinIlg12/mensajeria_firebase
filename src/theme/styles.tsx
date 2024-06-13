@@ -66,5 +66,9 @@ export const styles=StyleSheet.create({
     textDeatil:{
         fontWeight:'bold',
         fontSize:18
+    },
+    inconSingOut:{
+        marginTop:25,
+        alignItems:'center'
     }
 })

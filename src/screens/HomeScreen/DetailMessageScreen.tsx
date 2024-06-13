@@ -1,66 +1,85 @@
-import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
-import { Button, Divider, Text, TextInput } from 'react-native-paper'
-import { styles } from '../../theme/styles'
-import { useNavigation, useRoute } from '@react-navigation/native'
-import { Message } from './HomeScreen'
-import handlerSetValues from 'react';
-import { dbRealTime } from '../../configs/firebaseConfig'
-import { ref, update } from 'firebase/database'
+
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
+import { Button, Divider, Text, TextInput } from 'react-native-paper';
+import { styles } from '../../theme/styles';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { Message } from './HomeScreen';
+import { ref, remove, update } from 'firebase/database';
+import { dbRealTime } from '../../configs/firebaseConfig';
+
 export const DetailMessageScreen = () => {
-    //hook parametros mediante navegacion
-    const route=useRoute();
+    //hook para capturar los parametros mediante navegación
+    const route = useRoute();
     //@ts-ignore
-    const {message}= route.params;
+    const { message } = route.params;
     //console.log(message);
-    //hook use state: manipular el formulario
-    const [editForm, setEditForm] = useState<Message>({
-        id:'',
-        to:'',
-        subject:'',
-        message:''
+
+    //hook useState: manipular el formulario
+    const [editFormMessage, setEditFormMessage] = useState<Message>({
+        id: '',
+        to: '',
+        subject: '',
+        message: ''
     })
-    //hook use State: Mostar la informacion resivida en el formulario
+
+    //hook useEffect: Mostrar la información recibida en el formulario
     useEffect(() => {
-        setEditForm(message)
+        setEditFormMessage(message)
     }, [])
-    //hook navegacion
+
+    //hook navegación
     const navigation = useNavigation();
-    //cambiar datos de formularios
-    const handlerSetValues=(key: string, value: string)=>{
-        setEditForm({...editForm, [key]:value})
+
+    //Funición: cambiar los datos del formulario
+    const handlerSetValues = (key: string, value: string) => {
+        setEditFormMessage({ ...editFormMessage, [key]: value })
     }
-    //actualizar el mensaje
-    const handlerUpdateMessage= async ()=>{
-        const dbRef =ref(dbRealTime, 'messages/'+editForm.id)
-        await update(dbRef,{message: editForm.message, subject : editForm.subject})
+
+    //Función actualizar la data del mensaje
+    const handlerUpdateMessage = async () => {
+        //1. Referencia a al BDD - tabla
+        const dbRef = ref(dbRealTime, 'messages/' + editFormMessage.id)
+        //2. Actualizar data
+        await update(dbRef, { message: editFormMessage.message })
         navigation.goBack();
     }
-    
-  return (
-    <View style={styles.rootDetail}>
-        <View>
-        <Text style={styles.textDeatil} variant='headlineLarge'>Asunto: </Text>
-            <TextInput
-            value={editForm.subject}
-            onChangeText={(value)=>handlerSetValues('subject', value)}
-            />
+
+    //Función eliminar la data del mensaje
+    const handlerDeleteMessage = async () => {
+        //1. Referencia a la BDD - tabla
+        const dbRef = ref(dbRealTime, 'messages/' + editFormMessage.id)
+        //2. Eliminar data
+        await remove(dbRef);
+        navigation.goBack();
+    }
+
+    return (
+        <View style={styles.rootDetail}>
+            <View>
+                <Text variant='headlineSmall'>Asunto: {editFormMessage.subject}</Text>
+                <Divider />
+            </View>
+            <View>
+                <Text variant='bodyLarge'>Para: {editFormMessage.to}</Text>
+                <Divider />
+            </View>
+            <View style={{ gap: 20 }}>
+                <Text style={styles.textDeatil}>Mensaje</Text>
+                <TextInput
+                    value={editFormMessage.message}
+                    multiline={true}
+                    numberOfLines={5}
+                    onChangeText={(value) => handlerSetValues('message', value)} />
+            </View>
+            <Button
+                mode='contained'
+                icon='email-sync'
+                onPress={handlerUpdateMessage}>Actualizar</Button>
+            <Button
+                mode='contained'
+                icon='email-remove'
+                onPress={handlerDeleteMessage}>Eliminar</Button>
         </View>
-        <View>
-            <Text variant='headlineSmall'>Para: {editForm.to}</Text>
-            <Divider/>
-        </View>
-        <View style={{gap:20}}>
-            <Text style={styles.textDeatil} variant='headlineLarge'>Mensaje: </Text>
-            <TextInput
-            value={editForm.message}
-            multiline={true}
-            numberOfLines={7}
-            onChangeText={(value)=>handlerSetValues('message', value)}
-            />
-        </View>
-        <Button mode='contained' icon={'email-sync'} onPress={handlerUpdateMessage}>Actualizar</Button>
-        <Button mode='contained' icon={'email-remove'} onPress={()=>{}}>Eliminar</Button>
-    </View>
-  )
+    )
 }
